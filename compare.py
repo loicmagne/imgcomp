@@ -7,6 +7,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("ref", help="Reference image name")
     parser.add_argument("tar", help="Target image name")
+    parser.add_argument("--diff", help="Compare images with raw difference", action="store_true")
     args = parser.parse_args()
     
     ref_name = os.path.splitext(args.ref)[0]
@@ -16,4 +17,5 @@ if __name__ == '__main__':
     comparator = ImageComparator()
     comparator.compare(os.path.join('images/',args.ref),\
                        os.path.join('images/',args.tar),\
-                       os.path.join('comparisons/',dest))
+                       os.path.join('comparisons/',dest),\
+                       "diff" if args.diff else "KP")

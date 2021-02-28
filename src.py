@@ -120,7 +120,23 @@ class ImageComparator():
         return np.square(Z)
         
         
-    def probabilityMap(self,kp1,kp2,img_size,tile_size=100,diff_threshold=5,k=10):
+    def probabilityMapDiff(self,img1,img2):
+        '''
+        Output a probability maps that the images are differents solely
+        based on the images
+        
+        Parameters
+        ----------
+        img1,img2 : numpy.ndarray
+        '''
+        gimg1 = cv.cvtColor(img1,cv.COLOR_BGR2GRAY)
+        gimg2 = cv.cvtColor(img2,cv.COLOR_BGR2GRAY)
+        gimg1 = cv.GaussianBlur(gimg1,(21,21),0)
+        gimg2 = cv.GaussianBlur(gimg2,(21,21),0)
+        diff = np.clip(gimg2-gimg1,0,None)
+        return np.uint8(255.*np.square(diff/255.))
+    
+    def probabilityMapKP(self,kp1,kp2,img_size,tile_size=100,diff_threshold=5,k=10):
         '''
         Output a probability grid where each cell gives the probability
         that there is a difference between the two images in the given
@@ -138,7 +154,7 @@ class ImageComparator():
         t2 = self.tilingComparison(kp1,kp2,img_size,tile_size,diff_threshold)
         return np.uint8(255*t1*t2)
         
-    def compare(self,src,trgt,dest):
+    def compare(self,src,trgt,dest,method='KP'):
         '''
         Compare two images
         
@@ -185,7 +201,8 @@ class ImageComparator():
         kp2_new = [cv.KeyPoint(pt[0],pt[1],5) for pt in kp2_new_pt]
         
         # get probability map
-        heatmap = self.probabilityMap(kp1,kp2_new,(w1,h1),50)
+        heatmap = self.probabilityMapKP(kp1,kp2_new,(w1,h1),50) if method=='KP' \
+                  else self.probabilityMapDiff(src,result)
         heatmap = cv.applyColorMap(heatmap, cv.COLORMAP_JET)        
         
         # combine heatmap with warped image
