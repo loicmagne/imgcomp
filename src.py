@@ -129,12 +129,40 @@ class ImageComparator():
         ----------
         img1,img2 : numpy.ndarray
         '''
-        gimg1 = cv.cvtColor(img1,cv.COLOR_BGR2GRAY)
-        gimg2 = cv.cvtColor(img2,cv.COLOR_BGR2GRAY)
-        gimg1 = cv.GaussianBlur(gimg1,(21,21),0)
-        gimg2 = cv.GaussianBlur(gimg2,(21,21),0)
-        diff = np.clip(gimg2-gimg1,0,None)
-        return np.uint8(255.*np.square(diff/255.))
+        kernel = np.ones((5,5),np.uint8)
+        img1_blur = cv.GaussianBlur(img1,(21,21),0)
+        img2_blur = cv.GaussianBlur(img2,(21,21),0)
+        diff = cv.subtract(img1_blur,img2_blur)
+        
+        diff = cv.cvtColor(diff, cv.COLOR_BGR2GRAY)
+        diff = cv.dilate(diff, kernel, iterations = 2)
+        
+        _,diff = cv.threshold(diff,50,255,cv.THRESH_TOZERO)
+        
+        return np.uint8(diff)
+    
+    def probabilityMapBGSub(self,img1,img2):
+        '''
+        Output a probability maps that the images are differents using
+        background subtraction techniques
+        
+        Parameters
+        ----------
+        img1,img2 : numpy.ndarray
+        '''
+        backSub = cv.createBackgroundSubtractorKNN(history = 2)
+        kernel = np.ones((5,5),np.uint8)
+        
+        mask = backSub.apply(img1)
+        mask = backSub.apply(img1)
+        mask = backSub.apply(img1)
+        mask = backSub.apply(img1)
+        mask = backSub.apply(img1)
+        mask = backSub.apply(img2)
+        
+        kernel = np.ones((5,5),np.uint8)
+        mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel, iterations=1)
+        return np.uint8(mask)
     
     def probabilityMapKP(self,kp1,kp2,img_size,tile_size=100,diff_threshold=5,k=10):
         '''
@@ -166,6 +194,9 @@ class ImageComparator():
             path to the target image to be compared with the reference
         dest : string
             path where to save the comparison
+        method : string
+            method to use to compare images, between 'KP'(keypoints),
+            'BGS'(background subtraction), 'Diff'(raw difference)
         '''
         src = cv.imread(src)
         trgt = cv.imread(trgt)
@@ -202,8 +233,9 @@ class ImageComparator():
         
         # get probability map
         heatmap = self.probabilityMapKP(kp1,kp2_new,(w1,h1),50) if method=='KP' \
+                  else self.probabilityMapBGSub(src,result) if method=='BGS' \
                   else self.probabilityMapDiff(src,result)
-        heatmap = cv.applyColorMap(heatmap, cv.COLORMAP_JET)        
+        heatmap = cv.applyColorMap(heatmap, cv.COLORMAP_JET)
         
         # combine heatmap with warped image
         display = cv.addWeighted(result,0.5,heatmap,0.3,0)
