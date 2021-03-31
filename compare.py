@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser.add_argument("--diff", help="Compare images with raw difference", action="store_true")
     parser.add_argument("--bgs", help="Compare images with background subtraction", action="store_true")
     parser.add_argument("--kp", help="Compare images by comparing keypoints", action="store_true")
+    parser.add_argument("--flow", help="Compare images with optical flow", action="store_true")
     args = parser.parse_args()
     
     ref_name = os.path.splitext(args.ref)[0]
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     
     method = "KP" if args.kp \
              else "BGS" if args.bgs \
+             else "Flow" if args.flow \
              else "diff"
 
     comparator = ImageComparator()

@@ -163,7 +163,30 @@ class ImageComparator():
         kernel = np.ones((5,5),np.uint8)
         mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel, iterations=1)
         return np.uint8(mask)
-    
+            
+    def probabilityMapOptFlow(self,img1,img2):
+        '''
+        Output a probability maps that the images are differents using
+        optical flow techniques
+        
+        Parameters
+        ----------
+        img1,img2 : numpy.ndarray
+        '''
+        gimg1 = cv.cvtColor(img1,cv.COLOR_BGR2GRAY)
+        gimg2 = cv.cvtColor(img2,cv.COLOR_BGR2GRAY)
+        
+        result = np.zeros_like(img1)
+        result[...,1] = 255
+        
+        flow = cv.calcOpticalFlowFarneback(gimg1,gimg2, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        
+        mag, ang = cv.cartToPolar(flow[...,0], flow[...,1])
+        result[...,0] = ang*180/np.pi/2
+        result[...,2] = cv.normalize(mag,None,0,255,cv.NORM_MINMAX)
+        result = cv.cvtColor(result,cv.COLOR_HSV2BGR)
+        return result
+        
     def probabilityMapKP(self,kp1,kp2,img_size,tile_size=100,diff_threshold=5,k=10):
         '''
         Output a probability grid where each cell gives the probability
@@ -234,6 +257,7 @@ class ImageComparator():
         # get probability map
         heatmap = self.probabilityMapKP(kp1,kp2_new,(w1,h1),50) if method=='KP' \
                   else self.probabilityMapBGSub(src,result) if method=='BGS' \
+                  else self.probabilityMapOptFlow(src,result) if method=='Flow' \
                   else self.probabilityMapDiff(src,result)
         heatmap = cv.applyColorMap(heatmap, cv.COLORMAP_JET)
         
