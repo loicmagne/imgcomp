@@ -8,6 +8,6 @@ This project aims at comparing two images of a same view (the images must be rel
 
 Put the reference image and the target image in the `images/` folder. Then run
 
-    python3 compare.py ref tar
+    python3 main.py ref tar
     
 The comparison image will be saved under `comparisons/`
