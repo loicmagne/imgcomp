@@ -36,6 +36,8 @@ class ImageMatcher():
         -------
         H : np.array
             Homography matrix
+        matches : DMatch list
+            list of matches
         '''
         matches = self.matcher.match(des1,des2)
         matches = sorted(matches, key = lambda x:x.distance)
@@ -47,7 +49,7 @@ class ImageMatcher():
             pts1 = np.float32([kp.pt for kp in kp1_matched]).reshape(-1, 1, 2)
             pts2 = np.float32([kp.pt for kp in kp2_matched]).reshape(-1, 1, 2)
             H,_ = cv.findHomography(pts2, pts1, cv.RANSAC, threshold)
-            return H
+            return H, matches
         
         else:
             raise Error('Images not similar enough')
@@ -70,7 +72,8 @@ class ImageMatcher():
         result : cv.Mat
             target image warped into the reference image
             coordinates
-
+        kp : dict
+            all informations about keypoints and matches
         '''
         w1, h1 = src.shape[1], src.shape[0]
         w2, h2 = tar.shape[1], tar.shape[0]
@@ -80,9 +83,15 @@ class ImageMatcher():
         kp2, des2 = self.detectKeypoints(tar)
         
         # Match keypoints
-        H = self.matchKeypoints(kp1,kp2,des1,des2)
+        H, matches = self.matchKeypoints(kp1,kp2,des1,des2)
         
         # Transform the target image 
         result = cv.warpPerspective(tar, H, (w1, h1))
         
-        return src, result
+        kp = {
+            'kp_src' : kp1,
+            'kp_tar' : kp2,
+            'matches' : matches
+        }
+
+        return src, result, kp

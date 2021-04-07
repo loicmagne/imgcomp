@@ -35,7 +35,7 @@ class Comparator():
 
         ### Computation part
 
-        src, res = self.imgmatcher.match(src,tar)
+        src, res, kp = self.imgmatcher.match(src,tar)
         heatmap = self.imgcomparer.compare(src,res)
 
         ### Display part
@@ -44,26 +44,23 @@ class Comparator():
 
         # Combine heatmap with warped image
         comparison = cv.addWeighted(res,0.5,heatmap,0.3,0)
-        # Superimpose the warped imgs
-        superimposed = cv.addWeighted(src,0.5,res,0.5,0)
+        # Draw Matches
+        matches	= cv.drawMatches(src, kp['kp_src'], tar, kp['kp_tar'], kp['matches'], None)
 
         # Create a comparison image
-        final1 = np.hstack((src,res))
-        final2 = np.hstack((superimposed,comparison))
-        final = np.vstack((final1,final2))
+        final = np.hstack((matches,comparison))
 
         # Add text
         font = cv.FONT_HERSHEY_SIMPLEX
         color = (255,255,0)
-        cv.putText(final,'reference',(0,25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'target',(w1,25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'warped images',(0,h1+25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'comparison',(w1,h1+25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'reference',(25,25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'target',(w1+25,25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'comparison',(2*w1+25,25), font, 1,color,2,cv.LINE_AA)
 
         # Save the comparison
         cv.imwrite(dest,final)
 
 if __name__ == '__main__':
     from imgcomparing import *
-    cmp = Comparator(PatchDiffCMP(11,10,10,gaussian=True))
+    cmp = Comparator(PatchDiffCMP(11,5,5,gaussian=True))
     cmp.compare('images/ref2.jpg','images/tar2.jpg','comp.jpg')
