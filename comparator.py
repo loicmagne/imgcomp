@@ -48,7 +48,7 @@ class Comparator():
         superimposed = cv.addWeighted(src,0.5,res,0.5,0)
 
         # Create a comparison image
-        final1 = np.hstack((src,tar))
+        final1 = np.hstack((src,res))
         final2 = np.hstack((superimposed,comparison))
         final = np.vstack((final1,final2))
 
@@ -65,5 +65,5 @@ class Comparator():
 
 if __name__ == '__main__':
     from imgcomparing import *
-    cmp = Comparator(RawDiffCMP())
-    cmp.compare('ref.jpg','tar.jpg','comp.jpg')
+    cmp = Comparator(PatchDiffCMP(11,10,10,gaussian=True))
+    cmp.compare('images/ref2.jpg','images/tar2.jpg','comp.jpg')

@@ -9,6 +9,7 @@ if __name__ == '__main__':
     parser.add_argument("ref", help="Reference image image")
     parser.add_argument("tar", help="Target image image")
     parser.add_argument("--diff", help="Compare images with raw difference", action="store_true")
+    parser.add_argument("--patch", help="Compare images with patch difference", action="store_true")
     parser.add_argument("--bgs", help="Compare images with background subtraction", action="store_true")
     parser.add_argument("--flow", help="Compare images with optical flow", action="store_true")
     args = parser.parse_args()
@@ -19,7 +20,8 @@ if __name__ == '__main__':
     
     method = BGSubCMP() if args.bgs \
              else OptFlowCMP() if args.flow \
-             else RawDiffCMP()
+             else RawDiffCMP() if args.diff \
+             else PatchDiffCMP()
 
     comparator = Comparator(method)
     comparator.compare(os.path.join('images/',args.ref),\
