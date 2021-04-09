@@ -45,19 +45,16 @@ class Comparator():
 
         # Combine heatmap with warped image
         comparison = cv.addWeighted(res,0.5,heatmap,0.3,0)
-        # Draw Matches
-        matches	= cv.drawMatches(src, kp['kp_src'], tar, kp['kp_tar'], kp['matches'], None)
 
         # Create a comparison image
-        final = np.hstack((matches,res,comparison))
+        final = np.hstack((src,res,comparison))
 
         # Add text
         font = cv.FONT_HERSHEY_SIMPLEX
         color = (255,255,0)
         cv.putText(final,'reference',(25,25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'target',(w1+25,25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'warped',(2*w1+25,25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'comparison',(3*w1+25,25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'warped target',(w1+25,25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'comparison',(2*w1+25,25), font, 1,color,2,cv.LINE_AA)
 
         # Save the comparison
         cv.imwrite(dest,final)
