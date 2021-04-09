@@ -1,6 +1,7 @@
 '''
 Methods to compute correspondences between pairs of images
 '''
+import subprocess
 import numpy as np
 import cv2 as cv
 
@@ -91,6 +92,79 @@ class ImageMatcher():
         kp = {
             'kp_src' : kp1,
             'kp_tar' : kp2,
+            'matches' : matches
+        }
+
+        return src, result, kp
+
+
+class ImageMatcherSG(): 
+    def match(self,src,tar):
+        '''
+        Match two images
+        
+        Parameters
+        ----------
+        src : cv.Mat
+            reference image
+        tar : cv.Mat
+            target image to be compared with the reference
+
+        Returns
+        -------
+        src : cv.Mat
+            reference image
+        result : cv.Mat
+            target image warped into the reference image
+            coordinates
+        kp : dict
+            all informations about keypoints and matches
+        '''
+        w1, h1 = src.shape[1], src.shape[0]
+        w2, h2 = tar.shape[1], tar.shape[0]
+        threshold = 5.0
+
+        # Bash command to call SuperGlue
+        bashSG = "./SuperGluePretrainedNetwork/match_pairs.py \
+            --input_pairs images/pairs.txt \
+            --input_dir images/ \
+            --output_dir images/ \
+            --superglue indoor \
+            --resize -1"
+        subprocess.run(bashSG.split())
+        
+        # Load matches data
+        output_path = "images/matches.npz"
+        output = np.load(output_path)
+        kp1 = output['keypoints0']
+        kp2 = output['keypoints1']
+        matches_raw = output['matches']
+
+        # Process matches data
+        matches = []
+        kp1_matched = []
+        kp2_matched = []
+        for k in range(len(kp1)):
+            if matches_raw[k] == -1:
+                continue
+            else:
+                start_idx, end_idx = k, matches_raw[k]
+                dmatch = cv.DMatch(start_idx, end_idx, 0.)
+                kp1_matched.append(kp1[k])
+                kp2_matched.append(kp2[matches_raw[k]])
+                matches.append(dmatch)
+        
+        # Compute homography
+        pts1 = np.float32(kp1_matched).reshape(-1, 1, 2)
+        pts2 = np.float32(kp2_matched).reshape(-1, 1, 2)
+        H,_ = cv.findHomography(pts2, pts1, cv.RANSAC, threshold)
+
+        # Transform the target image 
+        result = cv.warpPerspective(tar, H, (w1, h1))
+        
+        kp = {
+            'kp_src' : [cv.KeyPoint(kp[0],kp[1],1) for kp in kp1],
+            'kp_tar' : [cv.KeyPoint(kp[0],kp[1],1) for kp in kp2],
             'matches' : matches
         }
 

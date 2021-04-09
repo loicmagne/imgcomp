@@ -4,17 +4,18 @@ Full pipeline for comparing images
 
 import numpy as np
 import cv2 as cv
-from imgmatching import ImageMatcher
+from imgmatching import ImageMatcher, ImageMatcherSG
 
 class Comparator():
-    def __init__(self,imgcomparer):
+    def __init__(self,imgmatcher,imgcomparer):
         '''
         Parameters
         ----------
+        imgmatcher : ImageMatcher
         imgcomparer : ImageComparer
         '''
+        self.imgmatcher = imgmatcher
         self.imgcomparer = imgcomparer
-        self.imgmatcher = ImageMatcher()
 
     def compare(self,src,tar,dest):
         '''
@@ -48,19 +49,20 @@ class Comparator():
         matches	= cv.drawMatches(src, kp['kp_src'], tar, kp['kp_tar'], kp['matches'], None)
 
         # Create a comparison image
-        final = np.hstack((matches,comparison))
+        final = np.hstack((matches,res,comparison))
 
         # Add text
         font = cv.FONT_HERSHEY_SIMPLEX
         color = (255,255,0)
         cv.putText(final,'reference',(25,25), font, 1,color,2,cv.LINE_AA)
         cv.putText(final,'target',(w1+25,25), font, 1,color,2,cv.LINE_AA)
-        cv.putText(final,'comparison',(2*w1+25,25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'warped',(2*w1+25,25), font, 1,color,2,cv.LINE_AA)
+        cv.putText(final,'comparison',(3*w1+25,25), font, 1,color,2,cv.LINE_AA)
 
         # Save the comparison
         cv.imwrite(dest,final)
 
 if __name__ == '__main__':
     from imgcomparing import *
-    cmp = Comparator(PatchDiffCMP(11,5,5,gaussian=True))
-    cmp.compare('images/ref2.jpg','images/tar2.jpg','comp.jpg')
+    cmp = Comparator(ImageMatcherSG(),PatchDiffCMP(11,5,5,gaussian=True))
+    cmp.compare('images/ref.jpg','images/tar.jpg','comp.jpg')
